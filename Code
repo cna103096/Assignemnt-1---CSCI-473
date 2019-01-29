@@ -1,0 +1,776 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+
+
+namespace Assigment_1
+{
+
+    //Types of items
+    public enum ItemType
+    {
+        Helmet, Neck, Shoulders, Back, Chest,
+        Wrist, Gloves, Belt, Pants, Boots,
+        Ring, Trinket
+    };
+
+    //Races
+    public enum Race { Orc, Troll, Tauren, Forsaken };
+
+    /*Guild Class
+     * creates a guild object with an id and a name
+     * */
+     public class Guild : IComparable
+    {
+        //guild vars
+        private uint id;
+        private string name;
+
+        //public properties
+        #region
+
+        //Free R/W
+        public uint Id
+        {
+            get { return id; }
+            set { id = value; }
+        }
+
+        //Free R/W
+        public string Name
+        {
+            get { return name; }
+            set { name = value; }
+        }
+        #endregion
+
+        /*Default constructor 
+         * no arguments
+         * */
+        public Guild()
+        {
+            Id = 0;
+            Name = "";
+        }
+
+        /*Default constructor 
+         * arguments for id and name
+         * */
+        public Guild(uint iId, string iName)
+        {
+            Id = iId;
+            Name = iName;
+        }
+
+
+        /* To string
+         * Output the guild
+         * */
+        public override string ToString()
+        {
+            //Displays the guild id and name
+            string output = String.Format("{0}", this.Name);
+            return output;
+        }
+
+
+        /*IComparable
+        * overrides comparable
+        * */
+        public int CompareTo(object alpha)
+        {
+            //Check for null values
+            if (alpha == null) return 1;
+
+            //typecast
+            Guild rightOp = alpha as Guild;
+
+            //Items are compared by name
+            if (rightOp != null)
+                return Name.CompareTo(rightOp.Name);
+            else
+                throw new ArgumentException("Guild CompareTo argument is not an item");
+        }
+    }
+
+
+    /* Player Class
+     * Player Object has an id, name, race, level, exp, guildID, gear,inventory
+     * */
+    public class Player : IComparable
+    {
+        //constants for levels, inventory, etc
+        private static uint MAX_LEVEL = 60;
+        private static uint GEAR_SLOTS = 14;
+        private static int MAX_INVENTORY_SIZE = 20;
+
+        //attributes of player class
+        private uint id;
+        private string name;
+        private Race playerRace;
+        private uint level;
+        private uint exp;
+        private uint guildID;
+        private uint[] gear;
+        private List<uint> inventory;
+
+        //public properties
+        #region
+        //R only
+        public uint Id
+        {
+            get { return id; }
+            private set { id = value; }
+        }
+
+        //R only
+        public string Name
+        {
+            get { return name; }
+            private set { name = value; }
+        }
+
+        //R only, 4 possible races
+        public Race PlayerRace
+        {
+            get { return playerRace; }
+            private set
+            {
+                if (value >= (Race)0 || value <= (Race)3)
+                    playerRace = value;
+                else
+                {
+                    Console.WriteLine(value + " is not a valid race id");
+                }
+            
+                
+            }
+        }
+
+        //Free R/W, [0, MAX_LEVEL]
+        public uint Level
+        {
+            get { return level; }
+            set
+            {
+                if (value >= 0 || value <= MAX_LEVEL)
+                    level = value;
+                else
+                {
+                    Console.WriteLine(value + "is not a valid level");
+                }
+            }
+        }
+
+        //Normal R access, W acces increments exp and increases level appropriatly
+        public uint Exp
+        {
+            get { return exp; }
+            set
+            {
+                exp = exp + value;
+                addExp(value);
+            }
+        }
+
+        public uint GuildID
+        {
+            get { return guildID; }
+            set { guildID = value; }
+        }
+
+        #endregion
+        //indexer for gear
+        public uint this[int index]
+        {
+            get { return gear[index]; }
+            set { gear[index] = value; }
+        }
+
+        /*addExp
+         * adds experience to the character, 
+         * increases level when more than (current level*1000) experince is awarded
+         * */
+        private void addExp(uint newExp)
+        {
+            //add experience
+            
+            while(newExp >= this.Level * 1000 && this.Level != MAX_LEVEL)
+            {
+                this.Level++;
+                newExp = newExp - this.Level * 1000;
+                Console.WriteLine("Ding!");
+            }
+             
+        }
+
+        /* Default Constructor
+         * No Arguments
+         * */
+        public Player()
+        {
+            Id = 0;
+            Name = "";
+            PlayerRace = 0;
+            Level = 1;
+            Exp = 0;
+            GuildID = 0;
+            gear = new uint[GEAR_SLOTS];
+            inventory = new List<uint>(MAX_INVENTORY_SIZE);
+        }
+
+        /* Constructor
+         * Arguments are id, name, race, level, exp and guildID
+         * */
+        public Player(uint iID, string iName, Race iPlayerRace, uint iLevel, uint iExp, uint iGuildID)
+        {
+            Id = iID;
+            Name = iName;
+            PlayerRace = iPlayerRace;
+            Level = iLevel;
+            Exp = iExp;
+            GuildID = iGuildID;
+            gear = new uint[GEAR_SLOTS];
+            inventory = new List<uint>(MAX_INVENTORY_SIZE);
+        }
+
+        /*To String
+         * outputs player name, race, level, and guild
+         * */
+        public override string ToString()
+        {
+            //Displays the player name, race, level
+            string raceString = "" + (Race)this.PlayerRace;
+            string levelString = "" + this.Level;
+            string output = String.Format("Name: {0}Race: {1} Level: {2}",  this.Name.PadRight(20), raceString.PadRight(10), levelString.PadRight(10));
+           
+            return output;
+        }
+
+
+        /*IComparable
+         * overrides comparable
+         * */
+        public int CompareTo(object alpha)
+        {
+            //Check for null values
+            if (alpha == null) return 1;
+
+            //typecast
+            Player rightOp = alpha as Player;
+
+            //Items are compared by name
+            if (rightOp != null)
+                return Name.CompareTo(rightOp.Name);
+            else
+                throw new ArgumentException("Player CompareTo argument is not an Player");
+        }
+
+    }   
+
+
+
+    /*Item Class
+     * Item object has an id, name, type, ilvl, primary, stamina, requirement and flavor attributes
+     * implements IComparable interface
+     * * * */
+    public class Item : IComparable
+    {
+
+        //constants for levels, inventory, etc
+        private static uint MAX_ILLVL = 360;
+        private static uint MAX_PRIMARY = 200;
+        private static uint MAX_STAMINA = 275;
+        private static uint MAX_LEVEL = 60;
+
+
+
+
+        //private attributes
+        private uint id;
+        private string name;
+        private ItemType type;
+        private uint ilvl;
+        private uint primary;
+        private uint stamina;
+        private uint requirement;
+        private string flavor;
+
+
+        //public properties
+        #region
+        //R only
+        public uint Id
+        {
+            get { return id; }
+            private set { id = value; }
+        }
+
+        //Free R/W
+        public string Name
+        {
+            get { return name; }
+            set { name = value; }
+        }
+
+        //Free R/W, [0, 12]
+        public ItemType Type
+        {
+            get { return type; }
+            set
+            {
+                if (value >= (ItemType)0 || value <= (ItemType)11)
+                    type = value;
+                else
+                {
+                    Console.WriteLine(value + " is not a valid item type");
+                }
+            }
+        }
+
+        //Free R/W, [0, MAX_ILLVL]
+        public uint Ilvl
+        {
+            get { return ilvl; }
+            set
+            {
+                if (value >= 0 || value <= MAX_ILLVL)
+                    ilvl = value;
+                else
+                {
+                    Console.WriteLine(value + " is not a valid level");
+                }
+            }
+        }
+
+        //Free R/W, [0, MAX_PRIMARY]
+        public uint Primary
+        {
+            get { return primary; }
+            set
+            {
+                if (value >= 0 || value <= MAX_PRIMARY)
+                    primary = value;
+                else
+                {
+                    Console.WriteLine(value + " is not a valid Primary");
+                }
+            }
+        }
+
+        //Free R/W, [0, MAX_STAMINA]
+        public uint Stamina
+        {
+            get { return stamina; }
+            set
+            {
+                if (value >= 0 || value <= MAX_STAMINA)
+                    stamina = value;
+                else
+                {
+                    Console.WriteLine(value + " is not valid stamina");
+                }
+            }
+        }
+
+        //Free R/W, [0, MAX_LEVEL]
+        public uint Requirement
+        {
+            get { return requirement; }
+            set
+            {
+                if (value >= 0 || value <= MAX_LEVEL)
+                    requirement = value;
+                else
+                {
+                    Console.WriteLine(value + "is not a valid requirement");
+                }
+            }
+        }
+
+        //Free R/W
+        public string Flavor
+        {
+            get { return flavor; }
+            set { flavor = value; }
+
+        }
+        #endregion
+
+
+
+        /*Constructor
+         * default constructor
+         * */
+        public Item()
+        {
+            Id = 0;
+            Name = "";
+            Type = 0;
+            Ilvl = 0;
+            Primary = 0;
+            Stamina = 0;
+            Requirement = 0;
+            Flavor = "";
+        }
+
+
+        /*Constructor
+         * constructor with all arguments
+         * */
+        public Item(uint iId, string iName, ItemType iType, uint iIlvl, uint iPrimary, uint iStamina, uint iRequirement, string iFlavor)
+        {
+            Id = iId;
+            Name = iName;
+            Type = iType;
+            Ilvl = iIlvl;
+            Primary = iPrimary;
+            Stamina = iStamina;
+            Requirement = iRequirement;
+            Flavor = iFlavor;
+        }
+
+        /* To String Method
+         * overrides toString() method so that items can be output
+         * */
+        public override string ToString()
+        {
+            //Displays the item type, name, ilvl, requirement, and flavor
+            string output =  String.Format("({0}) {1} |{2}| --{3}--\n\t\"{4}\"", this.Type , this.Name, this.Ilvl, this.Requirement, this.Flavor);
+            return output;
+        }
+
+
+        /*IComparable
+         * overrides comparable
+         * */
+        public int CompareTo(object alpha)
+        {
+            //Check for null values
+            if (alpha == null) return 1;
+
+            //typecast
+            Item rightOp = alpha as Item;
+
+            //Items are compared by name
+            if (rightOp != null)
+                return Name.CompareTo(rightOp.Name);
+            else
+                throw new ArgumentException("Item CompareTo argument is not an item");
+        }
+    }
+
+
+
+    class Program
+    {
+        //Files for input
+        public static string PLAYERS_FILE = "players.txt";
+        public static string GUILDS_FILE = "guilds.txt";
+        public static string EQUIPMENT_FILE = "equipment.txt";
+
+
+
+
+
+        /*Main method
+         * read the files and converts them into objects of proper type
+         * gives user options to call certain methods 
+         * */
+        public static int Main()
+        {
+            Console.WriteLine("Welcome to the World of ConflictCraft: Testing Environment!\n");
+
+            //Create Dictionary for Guilds
+            Dictionary<uint, string> dictGuilds = new Dictionary<uint, string>();
+            //Create Dictionary for Players
+            Dictionary<uint, Player> dictPlayers = new Dictionary<uint, Player>();
+            //Create Dictionary for items
+            Dictionary<uint, Item> dictItems = new Dictionary<uint, Item>();
+
+
+            //Read in Guilds
+            ReadGuilds(dictGuilds, GUILDS_FILE);
+            //Read in Players
+            ReadPlayers(dictPlayers, PLAYERS_FILE);
+            //read in items
+            ReadItems(dictItems, EQUIPMENT_FILE);
+
+
+            string a = "";
+            do
+            {
+                //show message and options
+                DisplayOptions();
+
+                a = Console.ReadLine();
+
+                switch (a.ToString())
+                {
+                    //Print all Players
+                    case "1":
+                        ListPlayers(dictPlayers, dictGuilds);
+                        break;
+
+                    //Print All Guilds
+                    case "2":
+                        ListGuilds(dictGuilds);
+                        break;
+
+                    //Print all gear
+                    case "3":
+                        ListItems(dictItems);
+                        break;
+
+                    //Print Gear List for Player
+                    case "4":
+
+                        break;
+                        
+                    //Leave Guild
+                    case "5":
+
+                        break;
+
+                    //Join Guild
+                    case "6":
+
+                        break;
+
+                    //Equip Gear
+                    case "7":
+
+                        break;
+
+                    //Unequip Gear
+                    case "8":
+
+                        break;
+
+                    //Award Experience
+                    case "9":
+
+                        break;
+
+                    //Icomparable test
+                    case "T":
+
+                        break;
+
+
+                    //all available options to quit out of program
+                    //When any are input turn into 10, which exits out of loop
+                    case "10":
+                    case "q":
+                    case "Q":
+                    case "quit":
+                    case "Quit":
+                    case "exit":
+                    case "Exit":
+                        a = "10";
+                        break;
+
+                    //When no valid input recieved
+                    default:
+                        Console.WriteLine(a + " is not an option.");
+                        break;
+                }
+            }
+            while (a != "10");
+
+            return 0;
+        }
+
+
+        /* Read in Guilds
+         * takes the dictionary to store guilds in and the file to get data from
+         * put guilds from file into dictionary
+         * */
+        public static void ReadGuilds(Dictionary<uint, string> dGuilds, string input)
+        {
+            //string to read lines into
+            string tempLine;
+            //try block to catch filenotfound
+            try
+            {
+                using (StreamReader inFile = new StreamReader(input))
+                {
+                    //priming the read
+                    tempLine = inFile.ReadLine();
+                    //while there is still data in the file
+                    while (tempLine != null)
+                    {
+                        //get each piece of the guild separated by tab into an array
+                        string[] inGuilds = tempLine.Split('\t');
+                        //if the correct number of attributes are on the line, create a guild from line
+                        if (inGuilds.Length == 2)
+                        {
+                            //Create the guild from the array
+                            Guild tempGuild = new Guild(Convert.ToUInt32(inGuilds[0]), inGuilds[1]);
+                            //add to dictionary of items
+                            dGuilds.Add(tempGuild.Id, tempGuild.Name);
+
+                        }//end of if length
+
+                        //read next line
+                        tempLine = inFile.ReadLine();
+                    }//end of while
+                }//end of using, items have been read in
+            }//end of try
+            catch (FileNotFoundException)
+            {
+                Console.WriteLine(input + "file does not exist");
+            }
+        }
+
+        /*List Guilds method
+         * prints out each Guild from a dictionary of guilds
+         * */
+        public static void ListGuilds(Dictionary<uint, string> kvp)
+        {
+            foreach (KeyValuePair<uint, string> pair in kvp)
+            {
+                Console.WriteLine("{0}", pair.Value);
+            }
+        }
+
+
+
+        /* Read in Players
+         * takes the dictionary to store the Players and the file the players are stored in
+         * puts the items into the dictionary
+         * */
+        public static void ReadPlayers(Dictionary<uint, Player> dPlayers, string input)
+        {
+            //string to read lines into
+            string tempLine;
+            //try block to catch filenotfound
+            try
+            {
+                using (StreamReader inFile = new StreamReader(input))
+                {
+                    //priming the read
+                    tempLine = inFile.ReadLine();
+                    //while there is still data in the file
+                    while (tempLine != null)
+                    {
+                        //get each piece of the player separated by tab into an array
+                        string[] inPlayers = tempLine.Split('\t');
+                        //if the correct number of attributes are on the line, create a player from line
+                        if (inPlayers.Length > 6)
+                        {
+                            
+                            //Create the player from the array, convert string to uints and other attributes when necessary
+                            Player tempPlayer = new Player(Convert.ToUInt32(inPlayers[0]), inPlayers[1], (Race)Convert.ToUInt32(inPlayers[2]), Convert.ToUInt32(inPlayers[3]), Convert.ToUInt32(inPlayers[4]), Convert.ToUInt32(inPlayers[5]));
+                            
+                            //add to dictionary of players
+                            dPlayers.Add(tempPlayer.Id, tempPlayer);
+                            
+
+                        }//end of if length
+
+                        //read next line
+                        tempLine = inFile.ReadLine();
+                    }//end of while
+                }//end of using, items have been read in
+            }//end of try
+            catch (FileNotFoundException)
+            {
+                Console.WriteLine(input + "file does not exist");
+            }
+        }
+
+        /*List Players method
+         * prints out each player from a dictionary of players
+         * */
+        public static void ListPlayers(Dictionary<uint, Player> kvp, Dictionary<uint, string> dGuilds)
+        {
+            foreach (KeyValuePair<uint, Player> pair in kvp)
+            {
+                
+                Console.Write("{0}", pair.Value);
+                string guildString;
+                if(dGuilds.TryGetValue(pair.Value.GuildID, out guildString))
+                {
+                    Console.Write("Guild: {0}\n", guildString );
+                }
+            }
+        }
+
+
+        /* Read in Items
+         * takes the dictionary to store the items and the file the items are stored in
+         * puts the items into the dictionary
+         * */
+        public static void ReadItems(Dictionary<uint, Item> dItems, string input)
+        {
+            //string to read lines into
+            string tempLine;
+            //try block to catch filenotfound
+            try
+            {
+                using (StreamReader inFile = new StreamReader(input))
+                {
+                    //priming the read
+                    tempLine = inFile.ReadLine();
+                    //while there is still data in the file
+                    while (tempLine != null)
+                    {
+                        //get each piece of the item separated by tab into an array
+                        string[] inItems = tempLine.Split('\t');
+                        //if the correct number of attributes are on the line, create an item from line
+                        if (inItems.Length == 8)
+                        {
+                            //Create the item from the array, convert string to uints and ItemTypes when necessary
+                            Item tempItem = new Item(Convert.ToUInt32(inItems[0]), inItems[1], (ItemType)Convert.ToUInt32(inItems[2]), Convert.ToUInt32(inItems[3]), Convert.ToUInt32(inItems[4]), Convert.ToUInt32(inItems[5]), Convert.ToUInt32(inItems[6]), inItems[7]);
+                            //add to dictionary of items
+                            dItems.Add(tempItem.Id, tempItem);
+
+                        }//end of if length
+
+                        //read next line
+                        tempLine = inFile.ReadLine();
+                    }//end of while
+                }//end of using, items have been read in
+            }//end of try
+            catch (FileNotFoundException)
+            {
+                Console.WriteLine(input + "file does not exist");
+            }
+        }
+
+        /*List Items method
+         * prints out each item from a dictionary of items
+         * */
+        public static void ListItems(Dictionary<uint, Item> kvp)
+        {
+            foreach (KeyValuePair<uint, Item> pair in kvp)
+            {
+                Console.WriteLine("{0}", pair.Value);
+            }
+        }
+
+        /* Displays Options
+         * displays an introduction and the options for the program
+         * */
+         public static void DisplayOptions()
+        {
+            Console.WriteLine("\nWelcome to World of ConflictCraft: Testing Environment. Please select an option from the list below:");
+            Console.WriteLine("\t1.) Print All Players");
+            Console.WriteLine("\t2.) Print All Guilds");
+            Console.WriteLine("\t3.) List All Gear");
+            Console.WriteLine("\t4.) Print Gear LIst for Player");
+            Console.WriteLine("\t5.) Leave Guild");
+            Console.WriteLine("\t6.) Join Guild");
+            Console.WriteLine("\t7.) Equip Gear");
+            Console.WriteLine("\t8.) Unequip Gear");
+            Console.WriteLine("\t9.) Award Experience");
+            Console.WriteLine("\t10.) Quit");
+
+        }
+    }
+}
