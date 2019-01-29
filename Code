@@ -667,6 +667,8 @@ namespace Assigment_1
                             //Create the player from the array, convert string to uints and other attributes when necessary
                             Player tempPlayer = new Player(Convert.ToUInt32(inPlayers[0]), inPlayers[1], (Race)Convert.ToUInt32(inPlayers[2]), Convert.ToUInt32(inPlayers[3]), Convert.ToUInt32(inPlayers[4]), Convert.ToUInt32(inPlayers[5]));
                             
+                            //Need to add gear to inventory
+                            
                             //add to dictionary of players
                             dPlayers.Add(tempPlayer.Id, tempPlayer);
                             
